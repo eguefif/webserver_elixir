@@ -1,11 +1,21 @@
 defmodule Header do
-  defstruct method: "", path: "", protocol: "", headers: []
+  defstruct method: "", path: [], protocol: "", headers: []
 
   def get_header(header_bytes) do
     IO.inspect(header_bytes)
     [request_line, rest] = String.split(header_bytes, "\r\n", parts: 2)
     [method, path, protocol] = String.split(request_line, " ")
-    %Header{method: method, path: path, protocol: protocol, headers: parse_headers(rest)}
+
+    %Header{
+      method: method,
+      path: parse_path(path),
+      protocol: protocol,
+      headers: parse_headers(rest)
+    }
+  end
+
+  defp parse_path(path) do
+    String.split(path, "/", trim: true)
   end
 
   defp parse_headers(headers_bytes) do

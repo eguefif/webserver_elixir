@@ -26,12 +26,37 @@ defmodule Server do
       |> parse_request()
 
     case request.path do
-      "/" -> write_line("HTTP/1.1 200 OK\r\n\r\n", socket)
-      "/index.html" -> write_line("HTTP/1.1 200 OK\r\n\r\n", socket)
-      _ -> write_line("HTTP/1.1 404 Not Found\r\n\r\n", socket)
+      [] -> write_line("HTTP/1.1 200 OK\r\n\r\n", socket)
+      ["index.html"] -> response_200("", socket)
+      ["echo", id] -> response_200(id, socket)
+      _ -> response_404("HTTP/1.1 404 Not Found\r\n\r\n", socket)
     end
 
     :gen_tcp.close(socket)
+  end
+
+  def response_200(body, socket) do
+    "HTTP/1.1 200 OK\r\n\r"
+    |> add_header("Content-Type", "text/plain")
+    |> add_header("Content-Length", byte_size(body) |> Integer.to_string())
+    |> add_body(body)
+    |> write_line(socket)
+  end
+
+  def response_404(body, socket) do
+    "HTTP/1.1 404 Not Found\r\n\r"
+    |> add_header("Content-Type", "text/plain")
+    |> add_header("Content-Length", byte_size(body) |> Integer.to_string())
+    |> add_body(body)
+    |> write_line(socket)
+  end
+
+  def add_header(request ,header, content) do
+    request <> "\r\n" <> header <> ": " <> content <> "\r\n"
+  end
+
+  def add_body(request, body) do
+    request <> "\r\n" <> body
   end
 
   def read_line(socket) do
@@ -47,6 +72,7 @@ defmodule Server do
   end
 
   def write_line(line, socket) do
+    IO.puts("Sending: " <> line)
     :gen_tcp.send(socket, line)
   end
 
