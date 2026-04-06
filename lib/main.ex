@@ -51,7 +51,7 @@ defmodule Server do
     |> write_line(socket)
   end
 
-  def add_header(request ,header, content) do
+  def add_header(request, header, content) do
     request <> "\r\n" <> header <> ": " <> content <> "\r\n"
   end
 
