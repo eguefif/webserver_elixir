@@ -26,17 +26,17 @@ defmodule Server do
       |> parse_request()
 
     case request.path do
-      [] -> write_line("HTTP/1.1 200 OK\r\n\r\n", socket)
+      [] -> response_200("", socket)
       ["index.html"] -> response_200("", socket)
       ["echo", id] -> response_200(id, socket)
-      _ -> response_404("HTTP/1.1 404 Not Found\r\n\r\n", socket)
+      _ -> response_404("", socket)
     end
 
     :gen_tcp.close(socket)
   end
 
   def response_200(body, socket) do
-    "HTTP/1.1 200 OK\r\n\r"
+    "HTTP/1.1 200 OK\r\n"
     |> add_header("Content-Type", "text/plain")
     |> add_header("Content-Length", byte_size(body) |> Integer.to_string())
     |> add_body(body)
@@ -44,7 +44,7 @@ defmodule Server do
   end
 
   def response_404(body, socket) do
-    "HTTP/1.1 404 Not Found\r\n\r"
+    "HTTP/1.1 404 Not Found\r\n"
     |> add_header("Content-Type", "text/plain")
     |> add_header("Content-Length", byte_size(body) |> Integer.to_string())
     |> add_body(body)
