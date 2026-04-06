@@ -20,17 +20,30 @@ defmodule Server do
   end
 
   def serve(socket) do
-  socket
-  |> read_line()
-  |> IO.inspect
+    request =
+      socket
+      |> read_line()
+      |> parse_request()
 
-  write_line("HTTP/1.1 200 OK\r\n\r\n\r\n", socket)
-  :gen_tcp.close(socket)
+    case request.path do
+      "/" -> write_line("HTTP/1.1 200 OK\r\n\r\n", socket)
+      "/index.html" -> write_line("HTTP/1.1 200 OK\r\n\r\n", socket)
+      _ -> write_line("HTTP/1.1 404 Not Found\r\n\r\n", socket)
+    end
+
+    :gen_tcp.close(socket)
   end
 
   def read_line(socket) do
     {:ok, data} = :gen_tcp.recv(socket, 0)
     data
+  end
+
+  def parse_request(request) do
+    [header, _rest] = String.split(request, "\r\n\r\n")
+    header = Header.get_header(header)
+    IO.inspect(header)
+    header
   end
 
   def write_line(line, socket) do
