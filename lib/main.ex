@@ -1,5 +1,6 @@
 defmodule Server do
   use Application
+  alias Server.Header
 
   def start(_type, _args) do
     Supervisor.start_link([{Task, fn -> Server.listen() end}], strategy: :one_for_one)
@@ -26,10 +27,21 @@ defmodule Server do
       |> parse_request()
 
     case request.path do
-      [] -> response_200("", socket)
-      ["index.html"] -> response_200("", socket)
-      ["echo", id] -> response_200(id, socket)
-      _ -> response_404("", socket)
+      [] ->
+        response_200("", socket)
+
+      ["index.html"] ->
+        response_200("", socket)
+
+      ["user-agent"] ->
+        user_agent = Header.get_header(request, "User-Agent")
+        response_200(user_agent, socket)
+
+      ["echo", id] ->
+        response_200(id, socket)
+
+      _ ->
+        response_404("", socket)
     end
 
     :gen_tcp.close(socket)

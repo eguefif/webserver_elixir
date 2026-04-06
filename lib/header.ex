@@ -1,17 +1,36 @@
-defmodule Header do
+defmodule Server.Header do
   defstruct method: "", path: [], protocol: "", headers: []
 
   def get_header(header_bytes) do
     IO.inspect(header_bytes)
+    # This crashes because there are no headers
     [request_line, rest] = String.split(header_bytes, "\r\n", parts: 2)
     [method, path, protocol] = String.split(request_line, " ")
 
-    %Header{
+    IO.inspect(rest)
+    headers = case byte_size(rest) do
+      0 -> []
+      _ -> parse_headers(rest)
+    end
+
+    %Server.Header{
       method: method,
       path: parse_path(path),
       protocol: protocol,
-      headers: parse_headers(rest)
+      headers: headers
     }
+  end
+
+  def get_header(request, lookfor_header) do
+    result =
+      Enum.find(request.headers, :not_found, fn header ->
+        elem(header, 0) == String.trim(lookfor_header)
+      end)
+
+    case result do
+      :not_found -> ""
+      header -> elem(header, 1)
+    end
   end
 
   defp parse_path(path) do
