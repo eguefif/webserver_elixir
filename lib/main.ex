@@ -52,7 +52,7 @@ defmodule Server do
   end
 
   def add_header(request, header, content) do
-    request <> "\r\n" <> header <> ": " <> content <> "\r\n"
+    request <> header <> ": " <> content <> "\r\n"
   end
 
   def add_body(request, body) do
