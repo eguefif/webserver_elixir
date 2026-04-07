@@ -16,47 +16,53 @@ defmodule Server.Acceptor do
   end
 
   def serve(socket) do
-    [request, body] =
-      socket
-      |> read_line()
-      |> parse_request()
+    with {:ok, data} <- read_line(socket),
+         [header, body] <-
+           parse_request(data) do
+      dispatch_request(socket, header, body)
 
-    case {request.method, request.path} do
+      case Server.Header.get_header(header, "Connection") do
+        "close" -> :gen_tcp.close(socket)
+        _ -> serve(socket)
+      end
+    else
+      _ -> :gen_tcp.close(socket)
+    end
+  end
+
+  def dispatch_request(socket, header, body) do
+    case {header.method, header.path} do
       {:get, []} ->
-        Server.Response.response_200(socket, "", request)
+        Server.Response.response_200(socket, "", header)
 
       {:get, ["files" | path]} ->
-        Server.Files.response_files(socket, path, request)
+        Server.Files.response_files(socket, path, header)
 
       {:post, ["files" | path]} ->
         Server.Files.create_file(socket, path, body)
 
       {:get, ["index.html"]} ->
-        Server.Response.response_200(socket, "", request)
+        Server.Response.response_200(socket, "", header)
 
       {:get, ["user-agent"]} ->
-        user_agent = Header.get_header(request, "User-Agent")
-        Server.Response.response_200(socket, user_agent, request)
+        user_agent = Header.get_header(header, "User-Agent")
+        Server.Response.response_200(socket, user_agent, header)
 
       {:get, ["echo", id]} ->
-        Server.Response.response_200(socket, id, request)
+        Server.Response.response_200(socket, id, header)
 
       {_, _} ->
         Server.Response.response_404(socket)
     end
-
-    :gen_tcp.close(socket)
   end
 
   def read_line(socket) do
-    {:ok, data} = :gen_tcp.recv(socket, 0)
-    data
+    :gen_tcp.recv(socket, 0)
   end
 
   def parse_request(request) do
     [header, body] = String.split(request, "\r\n\r\n")
     header = Header.get_header(header)
-    IO.inspect(header)
     [header, body]
   end
 end
