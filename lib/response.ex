@@ -11,7 +11,6 @@ defmodule Server.Response do
   def response_200(socket, body, request, content_type) do
     "HTTP/1.1 200 OK\r\n"
     |> add_header("Content-Type", content_type)
-    |> add_header("Content-Length", byte_size(body) |> Integer.to_string())
     |> add_encoding(request)
     |> add_body(body)
     |> write_line(socket)
@@ -32,11 +31,18 @@ defmodule Server.Response do
   end
 
   def add_body(response, body) do
+    body =
+      case String.contains?(response, "gzip") do
+        true -> Server.Gzip.encode(body)
+        false -> body
+      end
+
+    response = add_header(response, "Content-Length", byte_size(body) |> Integer.to_string())
+
     response <> "\r\n" <> body
   end
 
   def write_line(line, socket) do
-    IO.puts("Sending: " <> line)
     :gen_tcp.send(socket, line)
   end
 
