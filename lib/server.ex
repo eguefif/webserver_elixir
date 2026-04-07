@@ -23,47 +23,26 @@ defmodule Server.Acceptor do
 
     case request.path do
       [] ->
-        response_200("", socket)
+        Server.Response.response_200(socket, "")
+
+      ["files" | path] ->
+        Server.Files.response_files(socket, path)
 
       ["index.html"] ->
-        response_200("", socket)
+        Server.Response.response_200(socket, "")
 
       ["user-agent"] ->
         user_agent = Header.get_header(request, "User-Agent")
-        response_200(user_agent, socket)
+        Server.Response.response_200(socket, user_agent)
 
       ["echo", id] ->
-        response_200(id, socket)
+        Server.Response.response_200(socket, id)
 
       _ ->
-        response_404("", socket)
+        Server.Response.response_404(socket)
     end
 
     :gen_tcp.close(socket)
-  end
-
-  def response_200(body, socket) do
-    "HTTP/1.1 200 OK\r\n"
-    |> add_header("Content-Type", "text/plain")
-    |> add_header("Content-Length", byte_size(body) |> Integer.to_string())
-    |> add_body(body)
-    |> write_line(socket)
-  end
-
-  def response_404(body, socket) do
-    "HTTP/1.1 404 Not Found\r\n"
-    |> add_header("Content-Type", "text/plain")
-    |> add_header("Content-Length", byte_size(body) |> Integer.to_string())
-    |> add_body(body)
-    |> write_line(socket)
-  end
-
-  def add_header(request, header, content) do
-    request <> header <> ": " <> content <> "\r\n"
-  end
-
-  def add_body(request, body) do
-    request <> "\r\n" <> body
   end
 
   def read_line(socket) do
@@ -76,10 +55,5 @@ defmodule Server.Acceptor do
     header = Header.get_header(header)
     IO.inspect(header)
     header
-  end
-
-  def write_line(line, socket) do
-    IO.puts("Sending: " <> line)
-    :gen_tcp.send(socket, line)
   end
 end
