@@ -2,7 +2,12 @@ defmodule Server do
   use Application
 
   def start(_type, _args) do
-    Supervisor.start_link([{Task, fn -> Server.Acceptor.listen() end}], strategy: :one_for_one)
+    children = [
+      {Task.Supervisor, name: Server.ServerSupervisor},
+      {Task, fn -> Server.Acceptor.listen() end}
+    ]
+
+    Supervisor.start_link(children, strategy: :one_for_one)
   end
 
   def main(_args) do

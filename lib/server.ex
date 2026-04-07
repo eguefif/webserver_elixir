@@ -10,7 +10,8 @@ defmodule Server.Acceptor do
 
   def loop_acceptor(socket) do
     {:ok, client} = :gen_tcp.accept(socket)
-    serve(client)
+    {:ok, pid} = Task.Supervisor.start_child(Server.ServerSupervisor, fn -> serve(client) end)
+    :ok = :gen_tcp.controlling_process(client, pid)
     loop_acceptor(socket)
   end
 
@@ -67,9 +68,6 @@ defmodule Server.Acceptor do
 
   def read_line(socket) do
     {:ok, data} = :gen_tcp.recv(socket, 0)
-    IO.puts("*****************")
-    IO.puts(data)
-    IO.puts("*****************")
     data
   end
 
