@@ -4,21 +4,28 @@ defmodule Server.Header do
   def get_header(header_bytes) do
     IO.inspect(header_bytes)
     # This crashes because there are no headers
-    [request_line, rest] = String.split(header_bytes, "\r\n", parts: 2)
-    [method, path, protocol] = String.split(request_line, " ")
+    case String.split(header_bytes, "\r\n", parts: 2) do
+      [request_line] ->
+        [method, path, protocol] = String.split(request_line, " ")
 
-    IO.inspect(rest)
-    headers = case byte_size(rest) do
-      0 -> []
-      _ -> parse_headers(rest)
+        %Server.Header{
+          method: method,
+          path: parse_path(path),
+          protocol: protocol,
+          headers: []
+        }
+
+      [request_line, rest] ->
+        [method, path, protocol] = String.split(request_line, " ")
+        headers = parse_headers(rest)
+
+        %Server.Header{
+          method: method,
+          path: parse_path(path),
+          protocol: protocol,
+          headers: headers
+        }
     end
-
-    %Server.Header{
-      method: method,
-      path: parse_path(path),
-      protocol: protocol,
-      headers: headers
-    }
   end
 
   def get_header(request, lookfor_header) do
