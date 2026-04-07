@@ -16,13 +16,13 @@ defmodule Server.Files do
     end
   end
 
-  def create_file(socket, path, body) do
+  def create_file(socket, path, body, request) do
     base_path = get_base_path()
     path = Path.join([base_path] ++ path)
 
     case File.write(path, body, [:binary]) do
       :ok ->
-        Server.Response.response_201(socket)
+        Server.Response.response_201(socket, request)
 
       {:error, reason} ->
         IO.inspect(reason)

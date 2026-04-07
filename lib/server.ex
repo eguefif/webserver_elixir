@@ -39,7 +39,7 @@ defmodule Server.Acceptor do
         Server.Files.response_files(socket, path, header)
 
       {:post, ["files" | path]} ->
-        Server.Files.create_file(socket, path, body)
+        Server.Files.create_file(socket, path, body, header)
 
       {:get, ["index.html"]} ->
         Server.Response.response_200(socket, "", header)
