@@ -2,14 +2,12 @@ defmodule Server.Header do
   defstruct method: "", path: [], protocol: "", headers: []
 
   def get_header(header_bytes) do
-    IO.inspect(header_bytes)
-    # This crashes because there are no headers
     case String.split(header_bytes, "\r\n", parts: 2) do
       [request_line] ->
         [method, path, protocol] = String.split(request_line, " ")
 
         %Server.Header{
-          method: method,
+          method: parse_method(method),
           path: parse_path(path),
           protocol: protocol,
           headers: []
@@ -20,7 +18,7 @@ defmodule Server.Header do
         headers = parse_headers(rest)
 
         %Server.Header{
-          method: method,
+          method: parse_method(method),
           path: parse_path(path),
           protocol: protocol,
           headers: headers
@@ -37,6 +35,18 @@ defmodule Server.Header do
     case result do
       :not_found -> ""
       header -> elem(header, 1)
+    end
+  end
+
+  def parse_method(method) do
+    case String.downcase(method) do
+      "get" -> :get
+      "post" -> :post
+      "patch" -> :patch
+      "put" -> :put
+      "delete" -> :delete
+      "options" -> :options
+      "head" -> :get
     end
   end
 

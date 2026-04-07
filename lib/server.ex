@@ -16,29 +16,32 @@ defmodule Server.Acceptor do
   end
 
   def serve(socket) do
-    request =
+    [request, body] =
       socket
       |> read_line()
       |> parse_request()
 
-    case request.path do
-      [] ->
+    case {request.method, request.path} do
+      {:get, []} ->
         Server.Response.response_200(socket, "")
 
-      ["files" | path] ->
+      {:get, ["files" | path]} ->
         Server.Files.response_files(socket, path)
 
-      ["index.html"] ->
+      {:post, ["files" | path]} ->
+        Server.Files.create_file(socket, path, body)
+
+      {:get, ["index.html"]} ->
         Server.Response.response_200(socket, "")
 
-      ["user-agent"] ->
+      {:get, ["user-agent"]} ->
         user_agent = Header.get_header(request, "User-Agent")
         Server.Response.response_200(socket, user_agent)
 
-      ["echo", id] ->
+      {:get, ["echo", id]} ->
         Server.Response.response_200(socket, id)
 
-      _ ->
+      {_, _} ->
         Server.Response.response_404(socket)
     end
 
@@ -51,9 +54,9 @@ defmodule Server.Acceptor do
   end
 
   def parse_request(request) do
-    [header, _rest] = String.split(request, "\r\n\r\n")
+    [header, body] = String.split(request, "\r\n\r\n")
     header = Header.get_header(header)
     IO.inspect(header)
-    header
+    [header, body]
   end
 end

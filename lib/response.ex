@@ -7,6 +7,11 @@ defmodule Server.Response do
     |> write_line(socket)
   end
 
+  def response_201(socket) do
+    "HTTP/1.1 201 Created\r\n\r\n"
+    |> write_line(socket)
+  end
+
   def response_404(socket) do
     "HTTP/1.1 404 Not Found\r\n\r\n"
     |> write_line(socket)
