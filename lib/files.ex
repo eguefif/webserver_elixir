@@ -1,5 +1,5 @@
 defmodule Server.Files do
-  def response_files(socket, path) do
+  def response_files(socket, path, request) do
     base_path = get_base_path()
 
     path = Path.join([base_path] ++ path)
@@ -7,7 +7,7 @@ defmodule Server.Files do
 
     case File.read(path) do
       {:ok, data} ->
-        Server.Response.response_200(socket, data, "application/octet-stream")
+        Server.Response.response_200(socket, data, request, "application/octet-stream")
 
       {:error, reason} ->
         IO.puts("Reason")
@@ -19,11 +19,14 @@ defmodule Server.Files do
   def create_file(socket, path, body) do
     base_path = get_base_path()
     path = Path.join([base_path] ++ path)
-    IO.inspect(path)
-    case File.write(path, body, mode: :binary) do
-      :ok -> Server.Response.response_201(socket)
-      {:error, reason} -> IO.inspect(reason)
-      Server.Response.response_404(socket)
+
+    case File.write(path, body, [:binary]) do
+      :ok ->
+        Server.Response.response_201(socket)
+
+      {:error, reason} ->
+        IO.inspect(reason)
+        Server.Response.response_404(socket)
     end
   end
 

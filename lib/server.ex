@@ -23,23 +23,23 @@ defmodule Server.Acceptor do
 
     case {request.method, request.path} do
       {:get, []} ->
-        Server.Response.response_200(socket, "")
+        Server.Response.response_200(socket, "", request)
 
       {:get, ["files" | path]} ->
-        Server.Files.response_files(socket, path)
+        Server.Files.response_files(socket, path, request)
 
       {:post, ["files" | path]} ->
         Server.Files.create_file(socket, path, body)
 
       {:get, ["index.html"]} ->
-        Server.Response.response_200(socket, "")
+        Server.Response.response_200(socket, "", request)
 
       {:get, ["user-agent"]} ->
         user_agent = Header.get_header(request, "User-Agent")
-        Server.Response.response_200(socket, user_agent)
+        Server.Response.response_200(socket, user_agent, request)
 
       {:get, ["echo", id]} ->
-        Server.Response.response_200(socket, id)
+        Server.Response.response_200(socket, id, request)
 
       {_, _} ->
         Server.Response.response_404(socket)
